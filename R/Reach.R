@@ -66,7 +66,7 @@ Reach = R6::R6Class(
                   d:userid "<<<self$userid>>>";
                   foaf:name ?name;
                   d:added ?added.}',
-                  .open="<<<",.close=">>>") |> self$w$query() %>%
+           .open="<<<",.close=">>>") |> self$w$query() %>%
         as.data.frame() %>%
         mutate(userid=self$userid) %>%
         relocate(userid) -> result
@@ -79,6 +79,86 @@ Reach = R6::R6Class(
         NULL
       }
 
+    },
+
+    # ...........................................................................
+    #' @description
+    #' Lists or requests memberships of a collaboration. Where operations are not
+    #' logically possible, an explanatory message is printed to the screen.
+    #' @param action the desired action: `list` prints a list of all collaborations
+    #'   and whether the current user is already a member, whilst `join` requests to
+    #'   join a collaboration with the id `target` below.
+    #' @param target the id of a collaboration to join should action be set to `join`
+    #' @returns a data frame or NULL
+
+    collaboration=function(action="list",target="01"){
+
+      # query the database for the collaboration status
+
+      'select ?id ?name ?created ?participant
+
+            where {?collab d:partOf d:rsCommunity ;
+                           d:collabId ?id ;
+                           d:name ?name ;
+                           d:created ?created .
+            optional { ?membership d:collaboration ?id ;
+                                 d:hasParticipant ?participant . }}' |>
+        self$w$query() -> result
+
+      # if collaborations have been found, assess whether the current user is
+      # already a member
+
+      if (nrow(result) > 0){
+
+        result %>%
+          as.data.frame() %>%
+          group_by(id,name,created) %>%
+          summarise(member = ifelse(
+            any(!is.na(participant) & participant == self$userid),"yes","no")) %>%
+          as.data.frame() -> status
+
+      } else {
+        cat("no collaboarations found\n")
+        return(invisible(NULL))
+      }
+
+      # perform the requested user action
+
+      action = tolower(action)
+
+      if (action == "list"){
+
+        status
+
+      } else if (action == "join"){
+
+        requested.target = status %>% filter(id == target)
+
+        if (nrow(requested.target) == 0){
+          cat("requested collaboaration not found\n")
+          return(invisible(NULL))
+        }
+
+        if (nrow(requested.target %>% filter(member == "yes")) != 0){
+          cat("already following collaboaration\n")
+          return(invisible(NULL))
+        }
+
+        # if OK, proceed to update the database
+
+        self$w$add.edges(
+          list(
+            c("_:membership","d:hasParticipant",self$userid,"$"),
+            c("_:membership","d:collaboration",target,"$")
+          )
+        )
+
+        cat("joining collaboration\n")
+        return(invisible(NULL))
+
+      } else {
+        stop("action '",action,"' unknown")
+      }
     }
   )
 )

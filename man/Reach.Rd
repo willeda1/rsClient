@@ -5,6 +5,8 @@
 \title{connects to an external community hosting RDF store}
 \value{
 a data frame or NULL
+
+a data frame or NULL
 }
 \description{
 connects to an external community hosting RDF store
@@ -30,6 +32,7 @@ connects to an external community hosting RDF store
 \item \href{#method-Reach-new}{\code{Reach$new()}}
 \item \href{#method-Reach-print}{\code{Reach$print()}}
 \item \href{#method-Reach-myName}{\code{Reach$myName()}}
+\item \href{#method-Reach-collaboration}{\code{Reach$collaboration()}}
 \item \href{#method-Reach-clone}{\code{Reach$clone()}}
 }
 }
@@ -75,6 +78,28 @@ the remote entry is printed. If not a value of NULL is return
 \if{html}{\out{<div class="r">}}\preformatted{Reach$myName()}\if{html}{\out{</div>}}
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Reach-collaboration"></a>}}
+\if{latex}{\out{\hypertarget{method-Reach-collaboration}{}}}
+\subsection{Method \code{collaboration()}}{
+Lists or requests memberships of a collaboration. Where operations are not
+logically possible, an explanatory message is printed to the screen.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reach$collaboration(action = "list", target = "01")}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{action}}{the desired action: `list` prints a list of all collaborations
+and whether the current user is already a member, whilst `join` requests to
+join a collaboration with the id `target` below.}
+
+\item{\code{target}}{the id of a collaboration to join should action be set to `join`}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reach-clone"></a>}}
