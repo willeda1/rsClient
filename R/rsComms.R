@@ -6,8 +6,8 @@
 #' @import dplyr
 #' @export
 
-Reach = R6::R6Class(
-  "Reach",
+rsComms = R6::R6Class(
+  "rsComms",
 
   private=list(),
   public=list(
@@ -163,7 +163,11 @@ Reach = R6::R6Class(
     },
     # ...........................................................................
     #' @description
-    #' posts a report
+    #' lists or creates reports
+    #' @param action one of 'create' to create a new report or 'list' to list
+    #'    all available reports
+    #' @param id the report ID if creating a report
+    #' @param info an info string if creating a report
     report=function(action="create",id="01",info="this is a report"){
 
       action = tolower(action)
@@ -191,10 +195,6 @@ Reach = R6::R6Class(
                         d:hasId ?id ;
                         d:info ?info ;
                         d:created ?created .}' |> self$w$query()
-
-
-
-
 
       } else {
         stop("action '",action,"' not understood")
