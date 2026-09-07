@@ -149,7 +149,8 @@ Reach = R6::R6Class(
         self$w$add.edges(
           list(
             c("_:membership","d:hasParticipant",self$userid,"$"),
-            c("_:membership","d:collaboration",target,"$")
+            c("_:membership","d:collaboration",target,"$"),
+            c("_:membership","d:added",Zulu(),"$")
           )
         )
 
@@ -159,6 +160,51 @@ Reach = R6::R6Class(
       } else {
         stop("action '",action,"' unknown")
       }
+    },
+    # ...........................................................................
+    #' @description
+    #' posts a report
+    report=function(action="create",id="01",info="this is a report"){
+
+      action = tolower(action)
+
+      if (action == "create"){
+
+        if (id %in% (self$report("list") %>% as.data.frame() %>% pull(id))){
+          cat("report id already assigned\n")
+          return(invisible(NULL))
+        }
+
+        self$w$add.edges(
+          list(
+            c("_:report","rdf:type","d:report"),
+            c("_:report","d:hasId",id,"$"),
+            c("_:report","d:info",info,"$"),
+            c("_:report","d:created",Zulu(),"$")
+          )
+        )
+
+      } else if (action == "list"){
+
+        'select ?id ?info ?created
+        where { ?report rdf:type d:report ;
+                        d:hasId ?id ;
+                        d:info ?info ;
+                        d:created ?created .}' |> self$w$query()
+
+
+
+
+
+      } else {
+        stop("action '",action,"' not understood")
+      }
+
+
+
+
     }
+
+
   )
 )

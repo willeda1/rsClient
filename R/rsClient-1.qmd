@@ -1,0 +1,139 @@
+---
+title: "rsClient-1 simple grid data"
+author: David R Wille, started Sun Sep  6 22:00:45 2026
+date: last-modified
+date-format: "ddd MMM DD HH:mm:ss YYYY"
+
+format:
+  html:
+    self-contained: true
+    number-sections: false
+    toc: true
+    toc_float: true
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+
+warning: false
+error: false
+
+code-fold: show
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    number_sections: true
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(ggpubr)
+library(conflicted)
+library(rsClient)
+library(rsRDF)
+conflict_prefer("select","dplyr")
+conflict_prefer("filter","dplyr")
+```
+
+# a simple dataset
+
+```{r}
+A = tibble(x=seq(1,10,.1),
+       y1=sin(x),
+       y2=cos(x))
+
+A %>% pivot_longer(-1,names_to = "var") %>%
+  ggplot(aes(x,value,colour=var)) + geom_point()
+```
+
+# preparing the triples
+
+```{r}
+triples=list(
+  c("_:data","d:hasTag","TEST","$"),
+  c("_:data","d:updated",Zulu(),"$"))
+
+cols = colnames(A)
+
+n = length(triples)
+iobs = 0
+for (i in 1:nrow(A)){
+  row = paste0("row-",i)
+  n=n+1; triples[[n]] = c("_:data","d:hasRow",row,"$")
+  for (j in 1:ncol(A)){
+    iobs=iobs+1
+    obs=paste0("_:obs",iobs)
+          n=n+1; triples[[n]] = c("_:data","d:hasObs",obs)
+      n=n+1; triples[[n]] = c(obs,"d:hasRow",row,"$")
+      n=n+1; triples[[n]] = c(obs,"d:hasCol",cols[j],"$")
+      n=n+1; triples[[n]] = c(obs,"d:hasValue",A[i,j,drop=T],"$")
+  }
+}
+```
+
+::: {.callout-note title="triples as list" collapse=true}
+
+```{r}
+triples |> lapply(paste,collapse=" ") |> unlist()
+```
+
+:::
+
+::: {.callout-note title="triples as Turtle" collapse=true}
+
+```{r}
+w = Remote$new()
+w$allow.delete.all=T
+w$delete.all()
+
+edges2turtle(triples) |> cat()
+```
+
+:::
+
+# writing to RDF
+
+```{r}
+Zulu()
+w$add.edges(triples)
+Zulu()
+```
+
+# before retrieval and replotting
+
+```{r}
+'select ?post ?updated ?obs ?row ?col ?obs ?value
+
+where {?post d:hasTag "TEST"; 
+             d:updated ?updated;
+             d:hasRow ?row .
+
+       ?obs d:hasRow ?row ;
+            d:hasCol ?col ;
+            d:hasValue ?value .}' |> w$query() %>%
+  as.data.frame() -> B
+```
+
+```{r}
+B$updated %>% unique()
+```
+
+
+```{r}
+B %>%
+  select(col,row,value) %>%
+  pivot_wider(names_from = "col",values_from = "value") %>%
+  select(-row) %>%
+  pivot_longer(c("y1","y2")) %>%
+  mutate(x=as.numeric(x),
+         value=as.numeric(value)) %>%
+    ggplot(aes(x,value,colour=name)) + geom_point()
+
+```
+
+
+
