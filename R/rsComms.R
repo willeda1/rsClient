@@ -164,17 +164,23 @@ rsComms = R6::R6Class(
     # ...........................................................................
     #' @description
     #' lists or creates reports
-    #' @param action one of 'create' to create a new report or 'list' to list
-    #'    all available reports
+    #' @param action one of `create` to create a new report or `list` to list
+    #'    all available reports, or `add-data` to add data
     #' @param id the report ID if creating a report
     #' @param info an info string if creating a report
-    report=function(action="create",id="01",info="this is a report"){
+    #' @param triples triples to be posted for an `add-data` action
+    #' @md
+    report=function(action="list",id="01",info="this is a report",
+                    triples=NULL){
 
       action = tolower(action)
 
       if (action == "create"){
 
-        if (id %in% (self$report("list") %>% as.data.frame() %>% pull(id))){
+        reports = self$report("list")  %>% as.data.frame()
+
+
+        if (nrow(reports) > 0 & id %in% reports$id){
           cat("report id already assigned\n")
           return(invisible(NULL))
         }
@@ -195,6 +201,25 @@ rsComms = R6::R6Class(
                         d:hasId ?id ;
                         d:info ?info ;
                         d:created ?created .}' |> self$w$query()
+
+      } else if (action == "add-data"){
+
+        if (length(triples) == 0){
+          triples=list(c("_:data","rdf:type","d:data_test"))
+        }
+
+        self$w$add.edges(
+          c(
+            list(
+              c("_:data","rdf:type","d:data_posting"),
+              c("_:data","d:inReport",id,"$"),
+              c("_:data","d:author",self$userid,"$"),
+              c("_:data","d:posted",Zulu(),"$")
+            ),
+            triples
+          )
+        )
+
 
       } else {
         stop("action '",action,"' not understood")
