@@ -93,11 +93,11 @@ logically possible, an explanatory message is printed to the screen.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{action}}{the desired action: `list` prints a list of all collaborations
-and whether the current user is already a member, whilst `join` requests to
-join a collaboration with the id `target` below.}
+\item{\code{action}}{the desired action: \code{list} prints a list of all collaborations
+and whether the current user is already a member, whilst \code{join} requests to
+join a collaboration with the id \code{target} below.}
 
-\item{\code{target}}{the id of a collaboration to join should action be set to `join`}
+\item{\code{target}}{the id of a collaboration to join should action be set to \code{join}}
 }
 \if{html}{\out{</div>}}
 }
@@ -108,18 +108,26 @@ join a collaboration with the id `target` below.}
 \subsection{Method \code{report()}}{
 lists or creates reports
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{rsComms$report(action = "create", id = "01", info = "this is a report")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{rsComms$report(
+  action = "list",
+  id = "01",
+  info = "this is a report",
+  triples = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{action}}{one of 'create' to create a new report or 'list' to list
-all available reports}
+\item{\code{action}}{one of \code{create} to create a new report or \code{list} to list
+all available reports, or \code{post-data} or \code{read-data} to post or read
+data.}
 
 \item{\code{id}}{the report ID if creating a report}
 
 \item{\code{info}}{an info string if creating a report}
+
+\item{\code{triples}}{triples to be posted for an \code{add-data} action}
 }
 \if{html}{\out{</div>}}
 }

@@ -4,7 +4,7 @@
 \alias{dataframe2triples}
 \title{converts a rectangular data frame to a list of triple definitions}
 \usage{
-dataframe2triples(data, root = "_:data")
+dataframe2triples(data, root = "_:data", tag = NULL)
 }
 \arguments{
 \item{data}{the data frame to be translated}

@@ -165,7 +165,8 @@ rsComms = R6::R6Class(
     #' @description
     #' lists or creates reports
     #' @param action one of `create` to create a new report or `list` to list
-    #'    all available reports, or `add-data` to add data
+    #'    all available reports, or `post-data` or `read-data` to post or read
+    #'    data.
     #' @param id the report ID if creating a report
     #' @param info an info string if creating a report
     #' @param triples triples to be posted for an `add-data` action
@@ -202,7 +203,7 @@ rsComms = R6::R6Class(
                         d:info ?info ;
                         d:created ?created .}' |> self$w$query()
 
-      } else if (action == "add-data"){
+      } else if (action == "post-data"){
 
         if (length(triples) == 0){
           triples=list(c("_:data","rdf:type","d:data_test"))
@@ -220,6 +221,23 @@ rsComms = R6::R6Class(
           )
         )
 
+      } else if (action == "read-data"){
+
+        'select ?reportID ?tag ?encoder ?author ?posted ?row ?col ?value
+
+        where {
+          ?data rdf:type d:data_posting ;
+          d:inReport ?reportID ;
+          d:author ?author ;
+          d:posted ?posted ;
+          d:hasObs ?obs .
+          ?obs  d:hasRow ?row ;
+          d:hasCol ?col ;
+          d:hasValue ?value .
+          optional {?data d:hasTag ?tag }
+          optional {?data d:encoder ?encoder }}' |> self$w$query() %>%
+          as.data.frame() %>%
+          pivot_wider(names_from="col",values_from="value")
 
       } else {
         stop("action '",action,"' not understood")

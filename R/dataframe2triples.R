@@ -17,11 +17,17 @@
 #'
 #' dataframe2triples(A) |> lapply(paste,collapse=" ") |> unlist()
 
-dataframe2triples=function(data,root="_:data"){
+dataframe2triples=function(data,root="_:data",tag=NULL){
+
 
   triples=list()
-
   n=0; iobs = 0
+
+  if (!is.null(tag)){
+    n=n+1; triples[[n]]=c("_:data","d:hasTag",tag,"$")
+  }
+  n=n+1; triples[[n]]=c("_:data","d:encoder","dataframe","$")
+
   cols = colnames(data)
   for (i in 1:nrow(data)){
     row = paste0("row-",i)
