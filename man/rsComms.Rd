@@ -23,6 +23,9 @@ connects to an external community hosting RDF store
 \item{\code{userid}}{the userid of the current client}
 
 \item{\code{created}}{the time of creation of this R6 object}
+
+\item{\code{encoders}}{a list mapping the names of data encoders to the names of
+the functions that support them}
 }
 \if{html}{\out{</div>}}
 }
@@ -111,8 +114,10 @@ lists or creates reports
 \if{html}{\out{<div class="r">}}\preformatted{rsComms$report(
   action = "list",
   id = "01",
+  tag = NULL,
   info = "this is a report",
-  triples = NULL
+  triples = NULL,
+  encoder = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -124,6 +129,8 @@ all available reports, or \code{post-data} or \code{read-data} to post or read
 data.}
 
 \item{\code{id}}{the report ID if creating a report}
+
+\item{\code{tag}}{a string tag to identify one or more datasets}
 
 \item{\code{info}}{an info string if creating a report}
 

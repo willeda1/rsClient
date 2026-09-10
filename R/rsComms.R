@@ -15,11 +15,16 @@ rsComms = R6::R6Class(
     #' @field endpoint the URL of the remote triple store
     #' @field userid the userid of the current client
     #' @field created the time of creation of this R6 object
+    #' @field encoders a list mapping the names of data encoders to the names of
+    #'   the functions that support them
 
     w=NULL,
     endpoint=NULL,
     userid=NULL,
     created=NULL,
+    encoders=list(
+      dataframe="dataframeEncoder"
+    ),
 
     # ...........................................................................
     #' @description
@@ -168,11 +173,12 @@ rsComms = R6::R6Class(
     #'    all available reports, or `post-data` or `read-data` to post or read
     #'    data.
     #' @param id the report ID if creating a report
+    #' @param tag a string tag to identify one or more datasets
     #' @param info an info string if creating a report
     #' @param triples triples to be posted for an `add-data` action
     #' @md
-    report=function(action="list",id="01",info="this is a report",
-                    triples=NULL){
+    report=function(action="list",id="01",tag=NULL,info="this is a report",
+                    triples=NULL,encoder=NULL){
 
       action = tolower(action)
 
@@ -221,23 +227,79 @@ rsComms = R6::R6Class(
           )
         )
 
-      } else if (action == "read-data"){
+      } else if (action == "list-data"){
 
-        'select ?reportID ?tag ?encoder ?author ?posted ?row ?col ?value
+
+        'select ?reportID ?tag ?encoder ?author ?posted
 
         where {
           ?data rdf:type d:data_posting ;
           d:inReport ?reportID ;
           d:author ?author ;
           d:posted ?posted ;
-          d:hasObs ?obs .
-          ?obs  d:hasRow ?row ;
-          d:hasCol ?col ;
-          d:hasValue ?value .
           optional {?data d:hasTag ?tag }
-          optional {?data d:encoder ?encoder }}' |> self$w$query() %>%
-          as.data.frame() %>%
-          pivot_wider(names_from="col",values_from="value")
+          optional {?data d:encoder ?encoder }}' |> self$w$query() |>
+          as.data.frame()
+
+      } else if (action == "read-data"){
+
+        tag0=tag
+        available.data=self$report("list-data") %>%
+          distinct(reportID,tag,encoder)
+
+        if (nrow(available.data) > 0){
+          if (!is.null(id)){
+            available.data %>% filter(reportID==id) -> available.data
+          }
+        }
+
+        if (nrow(available.data) > 0){
+          if (!is.null(tag)){
+            tag0=tag
+            available.data %>% filter(tag==tag0) -> available.data
+          }
+        }
+
+        if (nrow(available.data) == 0){
+          cat("no matching data available\n")
+          return(invisible(NULL))
+        }
+
+        if (is.null(encoder)){
+          encoders=unique(available.data$encoder)
+          if (length(encoders) > 1){
+            cat("multiple encoders no longer supported\n")
+            return(invisible(NULL))
+          } else {
+            encoder=encoders[1]
+          }
+        }
+
+        if (is.null(encoder)){
+          stop("no encoder defined\n")
+        }
+
+        do.call(self$encoders[[encoder]],
+                list(read=list(w=self$w,
+                               target=available.data)))
+
+
+
+        # 'select ?reportID ?tag ?encoder ?author ?posted ?row ?col ?value
+        #
+        # where {
+        #   ?data rdf:type d:data_posting ;
+        #   d:inReport ?reportID ;
+        #   d:author ?author ;
+        #   d:posted ?posted ;
+        #   d:hasObs ?obs .
+        #   ?obs  d:hasRow ?row ;
+        #   d:hasCol ?col ;
+        #   d:hasValue ?value .
+        #   optional {?data d:hasTag ?tag }
+        #   optional {?data d:encoder ?encoder }}' |> self$w$query() %>%
+        #   as.data.frame() %>%
+        #   pivot_wider(names_from="col",values_from="value")
 
       } else {
         stop("action '",action,"' not understood")
