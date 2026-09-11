@@ -173,9 +173,14 @@ rsComms = R6::R6Class(
     #'    all available reports, or `post-data` or `read-data` to post or read
     #'    data.
     #' @param id the report ID if creating a report
-    #' @param tag a string tag to identify one or more datasets
+    #' @param tag a string tag to identify one or more datasets. Tags may
+    #'    also assigned here when posting data, or when the data triples
+    #'    as assembled themselves using the encoder.
     #' @param info an info string if creating a report
     #' @param triples triples to be posted for an `add-data` action
+    #' @param encoder a string defining the encoder used to decode any data read
+    #'   from the data store. This is normally automatic defined by the RDF
+    #'   entry itself.
     #' @md
     report=function(action="list",id="01",tag=NULL,info="this is a report",
                     triples=NULL,encoder=NULL){
@@ -185,7 +190,6 @@ rsComms = R6::R6Class(
       if (action == "create"){
 
         reports = self$report("list")  %>% as.data.frame()
-
 
         if (nrow(reports) > 0 & id %in% reports$id){
           cat("report id already assigned\n")
@@ -215,6 +219,12 @@ rsComms = R6::R6Class(
           triples=list(c("_:data","rdf:type","d:data_test"))
         }
 
+        if (!is.null(tag)){
+          tag.entry = list(c("_:data","d:hasTag",tag,"$"))
+        } else {
+          tag.entry = NULL
+        }
+
         self$w$add.edges(
           c(
             list(
@@ -223,12 +233,12 @@ rsComms = R6::R6Class(
               c("_:data","d:author",self$userid,"$"),
               c("_:data","d:posted",Zulu(),"$")
             ),
+            tag.entry,
             triples
           )
         )
 
       } else if (action == "list-data"){
-
 
         'select ?reportID ?tag ?encoder ?author ?posted
 

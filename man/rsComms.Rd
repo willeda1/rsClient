@@ -130,11 +130,17 @@ data.}
 
 \item{\code{id}}{the report ID if creating a report}
 
-\item{\code{tag}}{a string tag to identify one or more datasets}
+\item{\code{tag}}{a string tag to identify one or more datasets. Tags may
+also assigned here when posting data, or when the data triples
+as assembled themselves using the encoder.}
 
 \item{\code{info}}{an info string if creating a report}
 
 \item{\code{triples}}{triples to be posted for an \code{add-data} action}
+
+\item{\code{encoder}}{a string defining the encoder used to decode any data read
+from the data store. This is normally automatic defined by the RDF
+entry itself.}
 }
 \if{html}{\out{</div>}}
 }
