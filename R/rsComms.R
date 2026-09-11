@@ -124,7 +124,7 @@ rsComms = R6::R6Class(
 
       } else {
         cat("no collaboarations found\n")
-        return(invisible(NULL))
+        return()
       }
 
       # perform the requested user action
@@ -141,12 +141,12 @@ rsComms = R6::R6Class(
 
         if (nrow(requested.target) == 0){
           cat("requested collaboaration not found\n")
-          return(invisible(NULL))
+          return()
         }
 
         if (nrow(requested.target %>% filter(member == "yes")) != 0){
           cat("already following collaboaration\n")
-          return(invisible(NULL))
+          return()
         }
 
         # if OK, proceed to update the database
@@ -193,7 +193,7 @@ rsComms = R6::R6Class(
 
         if (nrow(reports) > 0 & id %in% reports$id){
           cat("report id already assigned\n")
-          return(invisible(NULL))
+          return()
         }
 
         self$w$add.edges(
@@ -214,6 +214,25 @@ rsComms = R6::R6Class(
                         d:created ?created .}' |> self$w$query()
 
       } else if (action == "post-data"){
+
+        if (is.null(self$myName())){
+          cat("userid '",self$userid,"' not found in remote store\n",sep="")
+          return()
+        }
+
+        reports = self$report("list")
+        print(reports)
+
+
+        if (nrow(reports) == 0){
+          cat("no reports found\n")
+          return()
+        } else if (! id %in% reports[,"id"]){
+          cat("no report found with id '",id,"'\n",sep="")
+          return()
+        }
+
+
 
         if (length(triples) == 0){
           triples=list(c("_:data","rdf:type","d:data_test"))
@@ -254,8 +273,10 @@ rsComms = R6::R6Class(
       } else if (action == "read-data"){
 
         tag0=tag
-        available.data=self$report("list-data") %>%
-          distinct(reportID,tag,encoder)
+        available.data=self$report("list-data")
+
+        if (nrow(available.data) == 0) stop("no reports found")
+        available.data |>  distinct(reportID,tag,encoder) -> available.data
 
         if (nrow(available.data) > 0){
           if (!is.null(id)){
@@ -279,7 +300,7 @@ rsComms = R6::R6Class(
           encoders=unique(available.data$encoder)
           if (length(encoders) > 1){
             cat("multiple encoders no longer supported\n")
-            return(invisible(NULL))
+            return()
           } else {
             encoder=encoders[1]
           }
@@ -292,24 +313,6 @@ rsComms = R6::R6Class(
         do.call(self$encoders[[encoder]],
                 list(read=list(w=self$w,
                                target=available.data)))
-
-
-
-        # 'select ?reportID ?tag ?encoder ?author ?posted ?row ?col ?value
-        #
-        # where {
-        #   ?data rdf:type d:data_posting ;
-        #   d:inReport ?reportID ;
-        #   d:author ?author ;
-        #   d:posted ?posted ;
-        #   d:hasObs ?obs .
-        #   ?obs  d:hasRow ?row ;
-        #   d:hasCol ?col ;
-        #   d:hasValue ?value .
-        #   optional {?data d:hasTag ?tag }
-        #   optional {?data d:encoder ?encoder }}' |> self$w$query() %>%
-        #   as.data.frame() %>%
-        #   pivot_wider(names_from="col",values_from="value")
 
       } else {
         stop("action '",action,"' not understood")
